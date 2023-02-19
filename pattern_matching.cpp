@@ -32,6 +32,7 @@ void pattern_matching::run()
     LearnPattern();
     Match();
     SaveRes();
+    CalculateAnomalyMap();
 }
 
 void pattern_matching::LoadSrc()
@@ -39,6 +40,7 @@ void pattern_matching::LoadSrc()
     Mat matSrc = imread(src_path, 1);
     Size size(int(matSrc.cols * m_dDstScale), int(matSrc.rows * m_dDstScale));
     resize(matSrc, matSrc_bgr, size);
+    matSrc_bgr.copyTo(matSrc_cutcell);
     cvtColor(matSrc_bgr, m_matSrc, COLOR_BGR2GRAY);
     //imshow("src", m_matSrc);
     //waitKey(0);
@@ -62,16 +64,6 @@ void pattern_matching::SaveRes()
         // 存模版图
         imwrite(out_path + "/_template.bmp", matDst_bgr);
 
-        // 存每个cell图
-        for (int i = 0; i < iSize; i++)
-        {
-            Rect rect(m_vecSingleTargetData[i].ptLT.x, m_vecSingleTargetData[i].ptLT.y,
-                      m_vecSingleTargetData[i].ptRT.x - m_vecSingleTargetData[i].ptLT.x,
-                      m_vecSingleTargetData[i].ptLB.y - m_vecSingleTargetData[i].ptLT.y);
-            Mat out = matSrc_bgr(rect);
-            imwrite(out_path + "/" + to_string(i+1) + ".bmp", out);
-        }
-
         // 在原图上画出检测位置
         for (int i = 0; i < iSize; i++)
         {
@@ -91,9 +83,7 @@ void pattern_matching::SaveRes()
             {
                 ptDis1 = (ptLB - ptLT) / 3;
                 ptDis2 = (ptRT - ptLT) / 3 * (m_matDst.rows / (float)m_matDst.cols);
-            }
-            else
-            {
+            }else {
                 ptDis1 = (ptLB - ptLT) / 3 * (m_matDst.cols / (float)m_matDst.rows);
                 ptDis2 = (ptRT - ptLT) / 3;
             }
@@ -113,8 +103,100 @@ void pattern_matching::SaveRes()
         }
         imwrite(out_path + "/_all.bmp", matSrc_bgr);
         // imshow("img", matSrc_bgr);
-        // waitKey(0);
     }
+}
+
+void pattern_matching::CalculateAnomalyMap()
+{
+    // 存每个cell图
+    int iSize = (int)m_vecSingleTargetData.size ();
+    if (m_bShowResult)
+    {
+        for (int i = 0; i < iSize; i++)
+        {
+            Rect rect(m_vecSingleTargetData[i].ptLT.x, m_vecSingleTargetData[i].ptLT.y,
+                      m_vecSingleTargetData[i].ptRT.x - m_vecSingleTargetData[i].ptLT.x,
+                      m_vecSingleTargetData[i].ptLB.y - m_vecSingleTargetData[i].ptLT.y);
+            Mat out = matSrc_cutcell(rect);
+            imwrite(out_path + "/" + to_string(i+1) + ".bmp", out);
+
+            Mat diff = diffFilterOfColorImage(out, matDst_bgr, pixel_threshold, k_size);
+            imwrite(out_path + "/" + to_string(i+1) + "_diff.bmp", diff * 100);
+
+            Mat anomaly_map = minFilterOfGrayImage(diff, k_size);
+            imwrite(out_path + "/" + to_string(i+1) + "_anomaly_map.bmp", anomaly_map);
+        }
+    }
+}
+
+Mat pattern_matching::diffFilterOfGrayImage(Mat back_img, Mat fore_img, int threshold, int k_size)
+{
+    int max_rows = fore_img.rows;          // 行像素数
+    int max_cols = fore_img.cols;          // 列像素数
+    int p = (k_size - 1) / 2;              // -(k−1)/2 ~ (k−1)/2
+    Mat img_diff = Mat::zeros(back_img.rows, back_img.cols, CV_8UC1);
+
+    // 对每个像素点进行处理
+    for (int row = 0; row < max_rows; ++row) {
+        for (int col = 0; col < max_cols; ++col) {
+            int fore_point = fore_img.at<uchar>(row, col);
+            int diff_min = 255; // 初始最大值
+            // 以当前像素点为中心的k*k的矩阵中，取最小值
+            for (int i = row - p; i <= row + p; ++i)
+                for (int j = col - p; j <= col + p; ++j)
+                    if(i >= 0 && i < max_rows && j >= 0 && j < max_cols){
+                        int back_point = back_img.at<uchar>(i, j);
+                        int diff = cv::abs(back_point - fore_point);
+                        if(diff < diff_min){
+                            diff_min = diff;
+                        }
+                        if(diff_min > threshold){
+                            diff_min = 255;
+                        }else{
+                            diff_min = 0;
+                        }
+                        img_diff.at<uchar>(row, col) = diff_min;
+                    }
+        }
+    }
+
+    return img_diff;
+}
+
+Mat pattern_matching::diffFilterOfColorImage(Mat back_img, Mat fore_img, int threshold, int k_size)
+{
+    Mat img_prev_gray;
+    Mat img_main_gray;
+    cvtColor(back_img, img_prev_gray, COLOR_RGB2GRAY);
+    cvtColor(fore_img, img_main_gray, COLOR_RGB2GRAY);
+
+    Mat img_diff = diffFilterOfGrayImage(img_prev_gray, img_main_gray, threshold, k_size);
+
+    return img_diff;
+}
+
+Mat pattern_matching::minFilterOfGrayImage(Mat img, int k_size)
+{
+    int max_rows = img.rows;          // 行像素数
+    int max_cols = img.cols;          // 列像素数
+    int p = (k_size - 1) / 2;               // -(k−1)/2 ~ (k−1)/2
+    cv::Mat dst = cv::Mat::zeros(max_rows, max_cols, CV_8UC1);
+
+    // 对每个像素点进行处理
+    for (int row = 0; row < max_rows; ++row) {
+        for (int col = 0; col < max_cols; ++col) {
+            int mint = 255; // 初始最大值
+            // 以当前像素点为中心的k*k的矩阵中，取最小值
+            for (int i = row - p; i <= row + p; ++i)
+                for (int j = col - p; j <= col + p; ++j)
+                    if(i >= 0 && i < max_rows && j >= 0 && j < max_cols)
+                        if (img.at<uchar>(i, j) < mint)
+                            mint = img.at<uchar>(i, j);
+            dst.at<uchar>(row, col) = mint;   // 像素值赋最小值
+        }
+    }
+
+    return dst;
 }
 
 bool pattern_matching::Match()

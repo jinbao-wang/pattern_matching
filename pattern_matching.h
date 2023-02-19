@@ -254,6 +254,7 @@ public:
     void LoadSrc();
     void LoadDst();
     void SaveRes();
+    void CalculateAnomalyMap();
     void LearnPattern();
     bool Match();
     int GetTopLayer (Mat* matTempl, int iMinDstLength);
@@ -272,11 +273,14 @@ public:
     void DrawMarkCross (Mat& matDraw, int iX, int iY, int iLength, Scalar color, int iThickness);
     void OutputRoi (s_SingleTargetMatch ss);
     bool SubPixEsimation (vector<s_MatchParameter>* vec, double* dX, double* dY, double* dAngle, double dAngleStep, int iMaxScoreIndex);
+    Mat diffFilterOfGrayImage(Mat back_img, Mat fore_img, int threshold, int k_size=3);
+    Mat diffFilterOfColorImage(Mat back_img, Mat fore_img, int threshold, int k_size=3);
+    Mat minFilterOfGrayImage(Mat img, int k_size=3);
 
-    String src_path = "/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-src-2.bmp";
-    String dst_path = "/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-dst-2-1.bmp";
-    String out_path = "/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-res";
-    Mat m_matSrc, matSrc_bgr;
+    String src_path = "/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-src-1.bmp";
+    String dst_path = "/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-dst-1-3.bmp";
+    String out_path = "/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-out";
+    Mat m_matSrc, matSrc_bgr, matSrc_cutcell;
     Mat m_matDst, matDst_bgr;
     s_TemplData m_TemplData;
     int m_iMaxPos = 200;
@@ -284,6 +288,8 @@ public:
     double m_dScore = 0.5;
     double m_dToleranceAngle = 5;
     int m_iMinReduceArea = 256;
+    int k_size = 5;
+    int pixel_threshold = 30;
     int m_dDstScale = 1;
     int m_dSrcScale = 1;
     int m_dNewScale = 1;

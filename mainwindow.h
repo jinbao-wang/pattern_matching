@@ -18,11 +18,10 @@ public:
     ~MainWindow();
 
 private slots:
+    void on_load_clicked();
     void on_detect_clicked();
     void showView();
     void freshView();
-
-    void on_load_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -31,6 +30,5 @@ private:
     QPixmap pixmap_show_src;
     QPixmap pixmap_show_dst;
     std::mutex img_lock;
-    QString output_path = "/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-res";
 };
 #endif // MAINWINDOW_H

@@ -24,32 +24,44 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_load_clicked()
 {
-    cout << "info:start:------------------- " << endl;
-    pm.initial();
-    freshView();
-
+    cout << "info:start ------------------- " << endl;
     cout << pm.src_path << endl;
     cout << pm.dst_path << endl;
+    cout << pm.out_path << endl;
     cout << pm.m_iMaxPos << endl;
     cout << pm.m_dMaxOverlap << endl;
     cout << pm.m_dScore << endl;
     cout << pm.m_dToleranceAngle << endl;
     cout << pm.m_iMinReduceArea << endl;
+    cout << pm.k_size << endl;
+    cout << pm.pixel_threshold << endl;
+
+    pm.LoadSrc();
+    pm.LoadDst();
+
+    freshView();
 }
 
 
 void MainWindow::on_detect_clicked()
 {
     // 创建输出文件夹，存检测cell图
+    QString output_path = QString::fromStdString(pm.out_path);
     QDir dir;
     if (!dir.exists(output_path)) {
         dir.mkpath(output_path);
     }
-    pm.out_path = output_path.toStdString();
 
-    pm.run();
+    pm.LearnPattern();
+    pm.Match();
+    pm.SaveRes();
     freshView();
-    cout << "info:end:------------------- " << endl;
+
+    cout << "info:save result, start calculate anomlay map ..." << endl;
+
+    pm.CalculateAnomalyMap();
+
+    cout << "info:end ------------------- " << endl;
 }
 
 void MainWindow::showView()
@@ -72,6 +84,8 @@ void MainWindow::showView()
     pm.m_dScore = ui->plainTextEdit_6->toPlainText().toDouble();
     pm.m_dToleranceAngle = ui->plainTextEdit_7->toPlainText().toDouble();
     pm.m_iMinReduceArea = ui->plainTextEdit_8->toPlainText().toInt();
+    pm.k_size = ui->plainTextEdit_9->toPlainText().toInt();
+    pm.pixel_threshold = ui->plainTextEdit_10->toPlainText().toInt();
 }
 
 void MainWindow::freshView()
