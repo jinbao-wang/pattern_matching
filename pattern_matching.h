@@ -1,15 +1,6 @@
 #ifndef PATTERN_MATCHING_H
 #define PATTERN_MATCHING_H
-
-#include <opencv2/opencv.hpp>
-#include <opencv2/highgui/highgui_c.h>
-#include <opencv2/imgproc/imgproc_c.h>
-#include <opencv2/imgproc/types_c.h>
-
-#include <iostream>
-
-using namespace cv;
-using namespace std;
+#include "imgprocess.h"
 
 #define VISION_TOLERANCE 0.0000001
 #define D2R (CV_PI / 180.0)
@@ -281,7 +272,7 @@ public:
     String dst_path = "/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-dst-1-3.bmp";
     String out_path = "/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-out";
     Mat m_matSrc, matSrc_bgr, matSrc_cutcell;
-    Mat m_matDst, matDst_bgr;
+    Mat m_matTpl, matTpl_bgr;
     s_TemplData m_TemplData;
     int m_iMaxPos = 200;
     double m_dMaxOverlap = 0.2;
@@ -301,6 +292,7 @@ public:
     int m_dTolerance4 = -100;
     bool m_bDebugMode = false;
     bool bSubPixelEstimation = true;
+    imgprocess imgprocess;
 };
 
 

@@ -28,7 +28,7 @@ private:
     QTimer* timer;
     pattern_matching pm;
     QPixmap pixmap_show_src;
-    QPixmap pixmap_show_dst;
+    QPixmap pixmap_show_tpl;
     std::mutex img_lock;
 };
 #endif // MAINWINDOW_H

@@ -3,7 +3,7 @@
 #include <QTimer>
 #include <QTextEdit>
 #include <QDebug>
-#include <QDir>
+#include "tools.h"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -48,16 +48,18 @@ void MainWindow::on_detect_clicked()
     // 创建输出文件夹，存检测cell图
     QString output_path = QString::fromStdString(pm.out_path);
     QDir dir;
-    if (!dir.exists(output_path)) {
-        dir.mkpath(output_path);
+    if (dir.exists(output_path)) {
+        DeleteFileOrFolder(output_path);
     }
+    dir.mkpath(output_path);
 
     pm.LearnPattern();
     pm.Match();
     pm.SaveRes();
     freshView();
 
-    cout << "info:save result, start calculate anomlay map ..." << endl;
+    cout << "info:save result image!" << endl;
+    cout << "info:calculate anomlay map ..." << endl;
 
     pm.CalculateAnomalyMap();
 
@@ -71,8 +73,8 @@ void MainWindow::showView()
         ui->label->show();
     }
 
-    if (!pixmap_show_dst.isNull()){
-        ui->label_10->setPixmap(pixmap_show_dst.scaled(ui->label_10->size(), Qt::KeepAspectRatio));
+    if (!pixmap_show_tpl.isNull()){
+        ui->label_10->setPixmap(pixmap_show_tpl.scaled(ui->label_10->size(), Qt::KeepAspectRatio));
         ui->label_10->show();
     }
 
@@ -97,10 +99,10 @@ void MainWindow::freshView()
         img_lock.unlock();
     }
 
-    if (!pm.matDst_bgr.empty()){
+    if (!pm.matTpl_bgr.empty()){
         img_lock.lock();
-        pixmap_show_dst = QPixmap::fromImage(QImage((unsigned char*)pm.matDst_bgr.data, pm.matDst_bgr.cols, pm.matDst_bgr.rows,
-                                                    pm.matDst_bgr.cols*pm.matDst_bgr.channels(), QImage::Format_BGR888));
+        pixmap_show_tpl = QPixmap::fromImage(QImage((unsigned char*)pm.matTpl_bgr.data, pm.matTpl_bgr.cols, pm.matTpl_bgr.rows,
+                                                    pm.matTpl_bgr.cols*pm.matTpl_bgr.channels(), QImage::Format_BGR888));
         img_lock.unlock();
     }
 }

@@ -8,13 +8,16 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    imgprocess.cpp \
     main.cpp \
     mainwindow.cpp \
     pattern_matching.cpp
 
 HEADERS += \
+    imgprocess.h \
     mainwindow.h \
-    pattern_matching.h
+    pattern_matching.h \
+    tools.h
 
 INCLUDEPATH += \
             /opt/homebrew/Cellar/opencv@3/3.4.16_2/include \

@@ -1,5 +1,6 @@
 #include "pattern_matching.h"
 
+
 bool compareScoreBig2Small (const s_MatchParameter& lhs, const s_MatchParameter& rhs) { return  lhs.dMatchScore > rhs.dMatchScore; }
 bool comparePtWithAngle (const pair<Point2f, double> lhs, const pair<Point2f, double> rhs) { return lhs.second < rhs.second; }
 bool compareMatchResultByPos (const s_SingleTargetMatch& lhs, const s_SingleTargetMatch& rhs)
@@ -50,8 +51,8 @@ void pattern_matching::LoadDst()
 {
     Mat matDst = imread(dst_path, 1);
     Size size(int(matDst.cols * m_dDstScale), int(matDst.rows * m_dDstScale));
-    resize(matDst, matDst_bgr, size);
-    cvtColor(matDst_bgr, m_matDst, COLOR_BGR2GRAY);
+    resize(matDst, matTpl_bgr, size);
+    cvtColor(matTpl_bgr, m_matTpl, COLOR_BGR2GRAY);
     //imshow("dst", m_matDst);
     //waitKey(0);
 }
@@ -62,7 +63,7 @@ void pattern_matching::SaveRes()
     if (m_bShowResult)
     {
         // 存模版图
-        imwrite(out_path + "/_template.bmp", matDst_bgr);
+        imwrite(out_path + "/_template.bmp", matTpl_bgr);
 
         // 在原图上画出检测位置
         for (int i = 0; i < iSize; i++)
@@ -79,12 +80,12 @@ void pattern_matching::SaveRes()
 
             //左上及角落邊框
             Point ptDis1, ptDis2;
-            if (m_matDst.cols > m_matDst.rows)
+            if (m_matTpl.cols > m_matTpl.rows)
             {
                 ptDis1 = (ptLB - ptLT) / 3;
-                ptDis2 = (ptRT - ptLT) / 3 * (m_matDst.rows / (float)m_matDst.cols);
+                ptDis2 = (ptRT - ptLT) / 3 * (m_matTpl.rows / (float)m_matTpl.cols);
             }else {
-                ptDis1 = (ptLB - ptLT) / 3 * (m_matDst.cols / (float)m_matDst.rows);
+                ptDis1 = (ptLB - ptLT) / 3 * (m_matTpl.cols / (float)m_matTpl.rows);
                 ptDis2 = (ptRT - ptLT) / 3;
             }
             line (matSrc_bgr, ptLT, ptLT + ptDis1 / 2, colorGreen, 1, CV_AA);
@@ -108,6 +109,12 @@ void pattern_matching::SaveRes()
 
 void pattern_matching::CalculateAnomalyMap()
 {
+    Mat matTpl_bgr_gb;
+    GaussianBlur(matTpl_bgr, matTpl_bgr_gb, Size(5, 5), 3, 3);
+
+    Mat matTpl_bgr_wb = imgprocess.SimplestCB(matTpl_bgr_gb, 1);
+    imwrite(out_path + "/_template_wb.bmp", matTpl_bgr_wb);
+
     // 存每个cell图
     int iSize = (int)m_vecSingleTargetData.size ();
     if (m_bShowResult)
@@ -117,106 +124,43 @@ void pattern_matching::CalculateAnomalyMap()
             Rect rect(m_vecSingleTargetData[i].ptLT.x, m_vecSingleTargetData[i].ptLT.y,
                       m_vecSingleTargetData[i].ptRT.x - m_vecSingleTargetData[i].ptLT.x,
                       m_vecSingleTargetData[i].ptLB.y - m_vecSingleTargetData[i].ptLT.y);
-            Mat out = matSrc_cutcell(rect);
-            imwrite(out_path + "/" + to_string(i+1) + ".bmp", out);
+            Mat tpl = matSrc_cutcell(rect);
+            imwrite(out_path + "/" + to_string(i+1) + ".bmp", tpl);
 
-            Mat diff = diffFilterOfColorImage(out, matDst_bgr, pixel_threshold, k_size);
+            Mat tpl_gb;
+            GaussianBlur(tpl, tpl_gb, Size(15, 15), 3, 3);
+            imwrite(out_path + "/" + to_string(i+1) + "_gb.bmp", tpl);
+
+            Mat tpl_wb = imgprocess.SimplestCB(tpl, 1);
+            imwrite(out_path + "/" + to_string(i+1) + "_wb.bmp", tpl_wb);
+
+            Mat diff = imgprocess.diffFilterOfColorImage(tpl_wb, matTpl_bgr_wb, pixel_threshold, k_size);
             imwrite(out_path + "/" + to_string(i+1) + "_diff.bmp", diff * 100);
 
-            Mat anomaly_map = minFilterOfGrayImage(diff, k_size);
+            Mat anomaly_map = imgprocess.minFilterOfGrayImage(diff, k_size);
             imwrite(out_path + "/" + to_string(i+1) + "_anomaly_map.bmp", anomaly_map);
         }
     }
 }
 
-Mat pattern_matching::diffFilterOfGrayImage(Mat back_img, Mat fore_img, int threshold, int k_size)
-{
-    int max_rows = fore_img.rows;          // 行像素数
-    int max_cols = fore_img.cols;          // 列像素数
-    int p = (k_size - 1) / 2;              // -(k−1)/2 ~ (k−1)/2
-    Mat img_diff = Mat::zeros(back_img.rows, back_img.cols, CV_8UC1);
-
-    // 对每个像素点进行处理
-    for (int row = 0; row < max_rows; ++row) {
-        for (int col = 0; col < max_cols; ++col) {
-            int fore_point = fore_img.at<uchar>(row, col);
-            int diff_min = 255; // 初始最大值
-            // 以当前像素点为中心的k*k的矩阵中，取最小值
-            for (int i = row - p; i <= row + p; ++i)
-                for (int j = col - p; j <= col + p; ++j)
-                    if(i >= 0 && i < max_rows && j >= 0 && j < max_cols){
-                        int back_point = back_img.at<uchar>(i, j);
-                        int diff = cv::abs(back_point - fore_point);
-                        if(diff < diff_min){
-                            diff_min = diff;
-                        }
-                        if(diff_min > threshold){
-                            diff_min = 255;
-                        }else{
-                            diff_min = 0;
-                        }
-                        img_diff.at<uchar>(row, col) = diff_min;
-                    }
-        }
-    }
-
-    return img_diff;
-}
-
-Mat pattern_matching::diffFilterOfColorImage(Mat back_img, Mat fore_img, int threshold, int k_size)
-{
-    Mat img_prev_gray;
-    Mat img_main_gray;
-    cvtColor(back_img, img_prev_gray, COLOR_RGB2GRAY);
-    cvtColor(fore_img, img_main_gray, COLOR_RGB2GRAY);
-
-    Mat img_diff = diffFilterOfGrayImage(img_prev_gray, img_main_gray, threshold, k_size);
-
-    return img_diff;
-}
-
-Mat pattern_matching::minFilterOfGrayImage(Mat img, int k_size)
-{
-    int max_rows = img.rows;          // 行像素数
-    int max_cols = img.cols;          // 列像素数
-    int p = (k_size - 1) / 2;               // -(k−1)/2 ~ (k−1)/2
-    cv::Mat dst = cv::Mat::zeros(max_rows, max_cols, CV_8UC1);
-
-    // 对每个像素点进行处理
-    for (int row = 0; row < max_rows; ++row) {
-        for (int col = 0; col < max_cols; ++col) {
-            int mint = 255; // 初始最大值
-            // 以当前像素点为中心的k*k的矩阵中，取最小值
-            for (int i = row - p; i <= row + p; ++i)
-                for (int j = col - p; j <= col + p; ++j)
-                    if(i >= 0 && i < max_rows && j >= 0 && j < max_cols)
-                        if (img.at<uchar>(i, j) < mint)
-                            mint = img.at<uchar>(i, j);
-            dst.at<uchar>(row, col) = mint;   // 像素值赋最小值
-        }
-    }
-
-    return dst;
-}
-
 bool pattern_matching::Match()
 {
-    if (m_matSrc.empty () || m_matDst.empty ()){
-        cout << "info:load img failed!" << endl;
+    if (m_matSrc.empty () || m_matTpl.empty ()){
+        cout << "info:load image failed!" << endl;
         return false;
     }else{
-        cout << "info:load img done!" << endl;
+        cout << "info:load image done!" << endl;
     }
-    if ((m_matDst.cols < m_matSrc.cols && m_matDst.rows > m_matSrc.rows) || (m_matDst.cols > m_matSrc.cols && m_matDst.rows < m_matSrc.rows))
+    if ((m_matTpl.cols < m_matSrc.cols && m_matTpl.rows > m_matSrc.rows) || (m_matTpl.cols > m_matSrc.cols && m_matTpl.rows < m_matSrc.rows))
         return false;
-    if (m_matDst.size ().area () > m_matSrc.size ().area ())
+    if (m_matTpl.size ().area () > m_matSrc.size ().area ())
         return false;
     if (!m_TemplData.bIsPatternLearned)
         return false;
 
     double d1 = clock ();
     //決定金字塔層數 總共為1 + iLayer層
-    int iTopLayer = GetTopLayer (&m_matDst, (int)sqrt ((double)m_iMinReduceArea));
+    int iTopLayer = GetTopLayer (&m_matTpl, (int)sqrt ((double)m_iMinReduceArea));
     //建立金字塔
     vector<Mat> vecMatSrcPyr;
     //    if (m_ckBitwiseNot.GetCheck ())
@@ -372,7 +316,7 @@ bool pattern_matching::Match()
     vector<s_MatchParameter> vecAllResult;
     cout << "info:vecMatchParameter.size: " << (int)vecMatchParameter.size () << endl;
     for (int i = 0; i < (int)vecMatchParameter.size (); i++)
-    //for (int i = 0; i < iSearchSize; i++)
+        //for (int i = 0; i < iSearchSize; i++)
     {
         double dRAngle = -vecMatchParameter[i].dMatchAngle * D2R;
         Point2f ptLT = ptRotatePt2f (vecMatchParameter[i].pt, ptCenter, dRAngle);
@@ -445,10 +389,10 @@ bool pattern_matching::Match()
                     break;
                 //次像素估計
                 if (bSubPixelEstimation
-                    && iLayer == 0
-                    && (!vecNewMatchParameter[iMaxScoreIndex].bPosOnBorder)
-                    && iMaxScoreIndex != 0
-                    && iMaxScoreIndex != 2)
+                        && iLayer == 0
+                        && (!vecNewMatchParameter[iMaxScoreIndex].bPosOnBorder)
+                        && iMaxScoreIndex != 0
+                        && iMaxScoreIndex != 2)
                 {
                     double dNewX = 0, dNewY = 0, dNewAngle = 0;
                     SubPixEsimation ( &vecNewMatchParameter, &dNewX, &dNewY, &dNewAngle, dAngleStep, iMaxScoreIndex);
@@ -558,10 +502,10 @@ void pattern_matching::LearnPattern()
 {
     m_TemplData.clear();
 
-    int iTopLayer = GetTopLayer (&m_matDst, (int)sqrt((double)m_iMinReduceArea));
-    buildPyramid (m_matDst, m_TemplData.vecPyramid, iTopLayer);
+    int iTopLayer = GetTopLayer (&m_matTpl, (int)sqrt((double)m_iMinReduceArea));
+    buildPyramid (m_matTpl, m_TemplData.vecPyramid, iTopLayer);
     s_TemplData* templData = &m_TemplData;
-    templData->iBorderColor = mean(m_matDst).val[0] < 128 ? 255 : 0;
+    templData->iBorderColor = mean(m_matTpl).val[0] < 128 ? 255 : 0;
     int iSize = templData->vecPyramid.size();
     templData->resize (iSize);
 
@@ -767,8 +711,8 @@ Size pattern_matching::GetBestRotationSize(Size sizeSrc, Size sizeDst, double dR
     Size sizeRet (iHalfWidth * 2, iHalfHeight * 2);
 
     bool bWrongSize = (sizeDst.width < sizeRet.width && sizeDst.height > sizeRet.height)
-        || (sizeDst.width > sizeRet.width && sizeDst.height < sizeRet.height
-            || sizeDst.area () > sizeRet.area ());
+            || (sizeDst.width > sizeRet.width && sizeDst.height < sizeRet.height
+                || sizeDst.area () > sizeRet.area ());
     if (bWrongSize)
         sizeRet = Size (int (fRightX - fLeftX + 0.5), int (fTopY - fBottomY + 0.5));
 
@@ -899,7 +843,7 @@ Point pattern_matching::GetNextMaxLoc(Mat &matResult, Point ptMaxLoc, Size sizeT
     int iStartX = int (ptMaxLoc.x - sizeTemplate.width * (1 - dMaxOverlap));
     int iStartY = int (ptMaxLoc.y - sizeTemplate.height * (1 - dMaxOverlap));
     Rect rectIgnore (iStartX, iStartY, int (2 * sizeTemplate.width * (1 - dMaxOverlap))
-        , int (2 * sizeTemplate.height * (1 - dMaxOverlap)));
+                     , int (2 * sizeTemplate.height * (1 - dMaxOverlap)));
     //塗黑
     rectangle (matResult, rectIgnore , Scalar (-1), CV_FILLED);
     blockMax.UpdateMax (rectIgnore);

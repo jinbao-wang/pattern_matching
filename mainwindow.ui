@@ -37,7 +37,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Src Img</string>
+     <string>Input Img</string>
     </property>
    </widget>
    <widget class="QPlainTextEdit" name="plainTextEdit">
@@ -154,7 +154,7 @@
      </rect>
     </property>
     <property name="plainText">
-     <string>0.1</string>
+     <string>0.5</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_6">
@@ -264,14 +264,14 @@
    <widget class="QLabel" name="label_10">
     <property name="geometry">
      <rect>
-      <x>860</x>
-      <y>20</y>
-      <width>80</width>
-      <height>80</height>
+      <x>850</x>
+      <y>60</y>
+      <width>131</width>
+      <height>71</height>
      </rect>
     </property>
     <property name="text">
-     <string>Dst Img</string>
+     <string>Template Img</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_11">
@@ -324,6 +324,19 @@
     </property>
     <property name="plainText">
      <string>30</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_13">
+    <property name="geometry">
+     <rect>
+      <x>850</x>
+      <y>30</y>
+      <width>101</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Template Img</string>
     </property>
    </widget>
   </widget>
