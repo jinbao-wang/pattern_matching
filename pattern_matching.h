@@ -1,6 +1,7 @@
 #ifndef PATTERN_MATCHING_H
 #define PATTERN_MATCHING_H
 #include "imgprocess.h"
+#include "visualize.h"
 
 #define VISION_TOLERANCE 0.0000001
 #define D2R (CV_PI / 180.0)
@@ -18,18 +19,6 @@
 #define SCALE_RATIO 1.25
 
 #define FONT_SIZE 115
-
-const Scalar colorWaterBlue (230, 255, 102);
-const Scalar colorBlue (255, 0, 0);
-const Scalar colorYellow (0, 255, 255);
-const Scalar colorRed (0, 0, 255);
-const Scalar colorBlack (0, 0, 0);
-const Scalar colorGray (200, 200, 200);
-const Scalar colorSystem (240, 240, 240);
-const Scalar colorGreen (0, 255, 0);
-const Scalar colorWhite (255, 255, 255);
-const Scalar colorPurple (214, 112, 218);
-const Scalar colorGoldenrod (15, 185, 255);
 
 struct s_TemplData
 {
@@ -101,12 +90,7 @@ struct s_MatchParameter
 
     }
 };
-struct s_SingleTargetMatch
-{
-    Point2d ptLT, ptRT, ptRB, ptLB, ptCenter;
-    double dMatchedAngle;
-    double dMatchScore;
-};
+
 struct s_BlockMax
 {
     struct Block
@@ -245,9 +229,9 @@ public:
     void LoadSrc();
     void LoadDst();
     void SaveRes();
-    void CalculateAnomalyMap();
     void LearnPattern();
     bool Match();
+
     int GetTopLayer (Mat* matTempl, int iMinDstLength);
     void MatchTemplate (cv::Mat& matSrc, s_TemplData* pTemplData, cv::Mat& matResult, int iLayer, bool bUseSIMD);
     void GetRotatedROI (Mat& matSrc, Size size, Point2f ptLT, double dAngle, Mat& matROI);
@@ -262,11 +246,10 @@ public:
     vector<s_SingleTargetMatch> m_vecSingleTargetData;
     void DrawDashLine (Mat& matDraw, Point ptStart, Point ptEnd, Scalar color1 = Scalar (0, 0, 255), Scalar color2 = Scalar::all (255));
     void DrawMarkCross (Mat& matDraw, int iX, int iY, int iLength, Scalar color, int iThickness);
-    void OutputRoi (s_SingleTargetMatch ss);
     bool SubPixEsimation (vector<s_MatchParameter>* vec, double* dX, double* dY, double* dAngle, double dAngleStep, int iMaxScoreIndex);
-    Mat diffFilterOfGrayImage(Mat back_img, Mat fore_img, int threshold, int k_size=3);
-    Mat diffFilterOfColorImage(Mat back_img, Mat fore_img, int threshold, int k_size=3);
-    Mat minFilterOfGrayImage(Mat img, int k_size=3);
+
+    imgprocess imgprocess;
+    visualize vis;
 
     String src_path = "/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-src-1.bmp";
     String dst_path = "/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-dst-1-3.bmp";
@@ -274,7 +257,7 @@ public:
     Mat m_matSrc, matSrc_bgr, matSrc_cutcell;
     Mat m_matTpl, matTpl_bgr;
     s_TemplData m_TemplData;
-    int m_iMaxPos = 200;
+    int m_iMaxPos = 3;
     double m_dMaxOverlap = 0.2;
     double m_dScore = 0.5;
     double m_dToleranceAngle = 5;
@@ -292,7 +275,6 @@ public:
     int m_dTolerance4 = -100;
     bool m_bDebugMode = false;
     bool bSubPixelEstimation = true;
-    imgprocess imgprocess;
 };
 
 

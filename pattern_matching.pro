@@ -11,20 +11,22 @@ SOURCES += \
     imgprocess.cpp \
     main.cpp \
     mainwindow.cpp \
-    pattern_matching.cpp
+    pattern_matching.cpp \
+    visualize.cpp
 
 HEADERS += \
     imgprocess.h \
     mainwindow.h \
     pattern_matching.h \
-    tools.h
+    tools.h \
+    visualize.h
 
 INCLUDEPATH += \
-            /opt/homebrew/Cellar/opencv@3/3.4.16_2/include \
-            /opt/homebrew/Cellar/opencv@3/3.4.16_2/include/opencv \
-            /opt/homebrew/Cellar/opencv@3/3.4.16_2/include/opencv2 \
+            /opt/homebrew/Cellar/opencv@3/3.4.16_7/include \
+            /opt/homebrew/Cellar/opencv@3/3.4.16_7/include/opencv \
+            /opt/homebrew/Cellar/opencv@3/3.4.16_7/include/opencv2 \
 
-LIBS += -L/opt/homebrew/Cellar/opencv@3/3.4.16_2/lib \
+LIBS += -L/opt/homebrew/Cellar/opencv@3/3.4.16_7/lib \
         -lopencv_calib3d    \
         -lopencv_core    \
         -lopencv_dnn    \

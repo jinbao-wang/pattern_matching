@@ -23,6 +23,8 @@ private slots:
     void showView();
     void freshView();
 
+    void on_pushButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     QTimer* timer;

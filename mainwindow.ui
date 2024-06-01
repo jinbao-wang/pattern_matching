@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1063</width>
+    <width>1085</width>
     <height>796</height>
    </rect>
   </property>
@@ -37,7 +37,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Input Img</string>
+     <string/>
     </property>
    </widget>
    <widget class="QPlainTextEdit" name="plainTextEdit">
@@ -50,7 +50,7 @@
      </rect>
     </property>
     <property name="plainText">
-     <string>200</string>
+     <string>1</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_2">
@@ -76,7 +76,7 @@
      </rect>
     </property>
     <property name="plainText">
-     <string>/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-src-1.bmp</string>
+     <string>/Users/wangjb/Desktop/奶盖检测/透明瓶——瓶底视觉检测20240511_2/合格品/Image_20240511124833940.bmp</string>
     </property>
    </widget>
    <widget class="QPlainTextEdit" name="plainTextEdit_3">
@@ -89,7 +89,7 @@
      </rect>
     </property>
     <property name="plainText">
-     <string>/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-dst-1-2.bmp</string>
+     <string>/Users/wangjb/Desktop/奶盖检测/透明瓶——瓶底视觉检测20240511/样例/dst.bmp</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_3">
@@ -141,7 +141,7 @@
      </rect>
     </property>
     <property name="plainText">
-     <string>/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-out</string>
+     <string>/Users/wangjb/Desktop/奶盖检测/透明瓶——瓶底视觉检测20240511/测试结果/</string>
     </property>
    </widget>
    <widget class="QPlainTextEdit" name="plainTextEdit_5">
@@ -180,7 +180,7 @@
      </rect>
     </property>
     <property name="plainText">
-     <string>0.8</string>
+     <string>0.5</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_7">
@@ -206,7 +206,7 @@
      </rect>
     </property>
     <property name="plainText">
-     <string>0</string>
+     <string>180</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_8">
@@ -265,9 +265,9 @@
     <property name="geometry">
      <rect>
       <x>850</x>
-      <y>60</y>
-      <width>131</width>
-      <height>71</height>
+      <y>0</y>
+      <width>171</width>
+      <height>111</height>
      </rect>
     </property>
     <property name="text">
@@ -326,17 +326,17 @@
      <string>30</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_13">
+   <widget class="QPushButton" name="pushButton">
     <property name="geometry">
      <rect>
-      <x>850</x>
-      <y>30</y>
-      <width>101</width>
-      <height>16</height>
+      <x>990</x>
+      <y>640</y>
+      <width>81</width>
+      <height>41</height>
      </rect>
     </property>
     <property name="text">
-     <string>Template Img</string>
+     <string>ALL</string>
     </property>
    </widget>
   </widget>
@@ -345,7 +345,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1063</width>
+     <width>1085</width>
      <height>37</height>
     </rect>
    </property>

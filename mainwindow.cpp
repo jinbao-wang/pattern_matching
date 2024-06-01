@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(showView()));
-    timer->start(1000 / 60.0f);
+    timer->start(1000 / 30.0f);
 }
 
 MainWindow::~MainWindow()
@@ -59,10 +59,6 @@ void MainWindow::on_detect_clicked()
     freshView();
 
     cout << "info:save result image!" << endl;
-    cout << "info:calculate anomlay map ..." << endl;
-
-    pm.CalculateAnomalyMap();
-
     cout << "info:end ------------------- " << endl;
 }
 
@@ -106,3 +102,27 @@ void MainWindow::freshView()
         img_lock.unlock();
     }
 }
+
+void MainWindow::on_pushButton_clicked()
+{
+    cv::String src_path = pm.src_path;
+    size_t pos = src_path.find_last_of("/\\");
+
+    // Extract the substring from the beginning to the position of the slash
+    cv::String src_dir = src_path.substr(0, pos);
+
+    // 获取目录下的所有文件
+    std::vector<QString> files = getAllFilesInDirectory(src_dir);
+
+    for (const QString &file : files) {
+        qDebug() << file;
+        pm.src_path = file.toStdString();
+        pm.LoadSrc();
+        pm.LoadDst();
+        pm.LearnPattern();
+        pm.Match();
+        pm.SaveRes();
+        freshView();
+    }
+}
+

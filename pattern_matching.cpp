@@ -33,7 +33,6 @@ void pattern_matching::run()
     LearnPattern();
     Match();
     SaveRes();
-    CalculateAnomalyMap();
 }
 
 void pattern_matching::LoadSrc()
@@ -66,80 +65,19 @@ void pattern_matching::SaveRes()
         imwrite(out_path + "/_template.bmp", matTpl_bgr);
 
         // 在原图上画出检测位置
-        for (int i = 0; i < iSize; i++)
-        {
-            Point ptLT (m_vecSingleTargetData[i].ptLT * m_dNewScale);
-            Point ptLB (m_vecSingleTargetData[i].ptLB * m_dNewScale);
-            Point ptRB (m_vecSingleTargetData[i].ptRB * m_dNewScale);
-            Point ptRT (m_vecSingleTargetData[i].ptRT * m_dNewScale);
-            Point ptC (m_vecSingleTargetData[i].ptCenter * m_dNewScale);
-            DrawDashLine (matSrc_bgr, ptLT, ptLB);
-            DrawDashLine (matSrc_bgr, ptLB, ptRB);
-            DrawDashLine (matSrc_bgr, ptRB, ptRT);
-            DrawDashLine (matSrc_bgr, ptRT, ptLT);
-
-            //左上及角落邊框
-            Point ptDis1, ptDis2;
-            if (m_matTpl.cols > m_matTpl.rows)
-            {
-                ptDis1 = (ptLB - ptLT) / 3;
-                ptDis2 = (ptRT - ptLT) / 3 * (m_matTpl.rows / (float)m_matTpl.cols);
-            }else {
-                ptDis1 = (ptLB - ptLT) / 3 * (m_matTpl.cols / (float)m_matTpl.rows);
-                ptDis2 = (ptRT - ptLT) / 3;
-            }
-            line (matSrc_bgr, ptLT, ptLT + ptDis1 / 2, colorGreen, 1, CV_AA);
-            line (matSrc_bgr, ptLT, ptLT + ptDis2 / 2, colorGreen, 1, CV_AA);
-            line (matSrc_bgr, ptRT, ptRT + ptDis1 / 2, colorGreen, 1, CV_AA);
-            line (matSrc_bgr, ptRT, ptRT - ptDis2 / 2, colorGreen, 1, CV_AA);
-            line (matSrc_bgr, ptRB, ptRB - ptDis1 / 2, colorGreen, 1, CV_AA);
-            line (matSrc_bgr, ptRB, ptRB - ptDis2 / 2, colorGreen, 1, CV_AA);
-            line (matSrc_bgr, ptLB, ptLB - ptDis1 / 2, colorGreen, 1, CV_AA);
-            line (matSrc_bgr, ptLB, ptLB + ptDis2 / 2, colorGreen, 1, CV_AA);
-
-            DrawDashLine (matSrc_bgr, ptLT + ptDis1, ptLT + ptDis2);
-            DrawMarkCross (matSrc_bgr, ptC.x, ptC.y, 5, colorGreen, 1);
-            string str = format ("%d", i);
-            putText (matSrc_bgr, str, (ptLT + ptRT) / 2, FONT_HERSHEY_PLAIN, 1, colorGreen);
+        int iSize = (int)m_vecSingleTargetData.size ();
+        for (int i = 0; i < iSize; i++) {
+            vis.drawBox(matSrc_bgr, m_matTpl, m_vecSingleTargetData[i], i);
         }
-        imwrite(out_path + "/_all.bmp", matSrc_bgr);
-        // imshow("img", matSrc_bgr);
-    }
-}
+        size_t slashIndex = src_path.find_last_of("/\\");
+        cv::String filenameWithExt = src_path.substr(slashIndex + 1);
+        size_t dotIndex = filenameWithExt.find_last_of('.');
+        cv::String filenameWithoutExt = filenameWithExt.substr(0, dotIndex);
+        cv::String res_path = out_path + filenameWithoutExt+ ".bmp";
 
-void pattern_matching::CalculateAnomalyMap()
-{
-    Mat matTpl_bgr_gb;
-    GaussianBlur(matTpl_bgr, matTpl_bgr_gb, Size(5, 5), 3, 3);
-
-    Mat matTpl_bgr_wb = imgprocess.SimplestCB(matTpl_bgr_gb, 1);
-    imwrite(out_path + "/_template_wb.bmp", matTpl_bgr_wb);
-
-    // 存每个cell图
-    int iSize = (int)m_vecSingleTargetData.size ();
-    if (m_bShowResult)
-    {
-        for (int i = 0; i < iSize; i++)
-        {
-            Rect rect(m_vecSingleTargetData[i].ptLT.x, m_vecSingleTargetData[i].ptLT.y,
-                      m_vecSingleTargetData[i].ptRT.x - m_vecSingleTargetData[i].ptLT.x,
-                      m_vecSingleTargetData[i].ptLB.y - m_vecSingleTargetData[i].ptLT.y);
-            Mat tpl = matSrc_cutcell(rect);
-            imwrite(out_path + "/" + to_string(i+1) + ".bmp", tpl);
-
-            Mat tpl_gb;
-            GaussianBlur(tpl, tpl_gb, Size(15, 15), 3, 3);
-            imwrite(out_path + "/" + to_string(i+1) + "_gb.bmp", tpl);
-
-            Mat tpl_wb = imgprocess.SimplestCB(tpl, 1);
-            imwrite(out_path + "/" + to_string(i+1) + "_wb.bmp", tpl_wb);
-
-            Mat diff = imgprocess.diffFilterOfColorImage(tpl_wb, matTpl_bgr_wb, pixel_threshold, k_size);
-            imwrite(out_path + "/" + to_string(i+1) + "_diff.bmp", diff * 100);
-
-            Mat anomaly_map = imgprocess.minFilterOfGrayImage(diff, k_size);
-            imwrite(out_path + "/" + to_string(i+1) + "_anomaly_map.bmp", anomaly_map);
-        }
+        imwrite(res_path, matSrc_bgr);
+        //    imshow("result", matSrc_bgr);
+        //    waitKey(0);
     }
 }
 
@@ -163,15 +101,6 @@ bool pattern_matching::Match()
     int iTopLayer = GetTopLayer (&m_matTpl, (int)sqrt ((double)m_iMinReduceArea));
     //建立金字塔
     vector<Mat> vecMatSrcPyr;
-    //    if (m_ckBitwiseNot.GetCheck ())
-    //    {
-    //        Mat matNewSrc = 255 - m_matSrc;
-    //        buildPyramid (matNewSrc, vecMatSrcPyr, iTopLayer);
-    //        imshow ("1", matNewSrc);
-    //        moveWindow ("1", 0, 0);
-    //    }
-    //    else
-    //        buildPyramid (m_matSrc, vecMatSrcPyr, iTopLayer);
     buildPyramid (m_matSrc, vecMatSrcPyr, iTopLayer);
 
     s_TemplData* pTemplData = &m_TemplData;
@@ -225,7 +154,6 @@ bool pattern_matching::Match()
         Mat matResult;
         Point ptMaxLoc;
         double dValue, dMaxVal;
-        double dRotate = clock ();
         Size sizeBest = GetBestRotationSize (vecMatSrcPyr[iTopLayer].size (), pTemplData->vecPyramid[iTopLayer].size (), vecAngles[i]);
 
         float fTranslationX = (sizeBest.width - 1) / 2.0f - ptCenter.x;
@@ -476,17 +404,7 @@ bool pattern_matching::Match()
             sstm.dMatchedAngle -= 360;
         m_vecSingleTargetData.push_back (sstm);
 
-        //Test Subpixel
-        /*Point2d ptLT = vecAllResult[i].ptSubPixel;
-        Point2d ptRT = Point2d (sstm.ptLT.x + iW * cos (dRAngle), sstm.ptLT.y - iW * sin (dRAngle));
-        Point2d ptLB = Point2d (sstm.ptLT.x + iH * sin (dRAngle), sstm.ptLT.y + iH * cos (dRAngle));
-        Point2d ptRB = Point2d (sstm.ptRT.x + iH * sin (dRAngle), sstm.ptRT.y + iH * cos (dRAngle));
-        Point2d ptCenter = Point2d ((sstm.ptLT.x + sstm.ptRT.x + sstm.ptRB.x + sstm.ptLB.x) / 4, (sstm.ptLT.y + sstm.ptRT.y + sstm.ptRB.y + sstm.ptLB.y) / 4);
-        CString strDiff;strDiff.Format (L"Diff(x, y):%.3f, %.3f", ptCenter.x - sstm.ptCenter.x, ptCenter.y - sstm.ptCenter.y);
-        AfxMessageBox (strDiff);*/
-        //Test Subpixel
-        //存出MATCH ROI
-        OutputRoi (sstm);
+        //如果大于设定的目标数量
         if (i + 1 == m_iMaxPos)
             break;
     }
@@ -924,11 +842,6 @@ void pattern_matching::DrawMarkCross(Mat &matDraw, int iX, int iY, int iLength, 
     Point ptC (iX, iY);
     line (matDraw, ptC - Point (iLength, 0), ptC + Point (iLength, 0), color, iThickness);
     line (matDraw, ptC - Point (0, iLength), ptC + Point (0, iLength), color, iThickness);
-}
-
-void pattern_matching::OutputRoi(s_SingleTargetMatch ss)
-{
-
 }
 
 bool pattern_matching::SubPixEsimation(vector<s_MatchParameter> *vec, double *dX, double *dY, double *dAngle, double dAngleStep, int iMaxScoreIndex)
