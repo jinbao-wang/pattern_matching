@@ -23,7 +23,7 @@ private slots:
     void showView();
     void freshView();
 
-    void on_pushButton_clicked();
+    void on_detectAll_clicked();
 
 private:
     Ui::MainWindow *ui;

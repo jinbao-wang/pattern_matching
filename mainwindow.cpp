@@ -33,8 +33,6 @@ void MainWindow::on_load_clicked()
     cout << pm.m_dScore << endl;
     cout << pm.m_dToleranceAngle << endl;
     cout << pm.m_iMinReduceArea << endl;
-    cout << pm.k_size << endl;
-    cout << pm.pixel_threshold << endl;
 
     pm.LoadSrc();
     pm.LoadDst();
@@ -82,8 +80,6 @@ void MainWindow::showView()
     pm.m_dScore = ui->plainTextEdit_6->toPlainText().toDouble();
     pm.m_dToleranceAngle = ui->plainTextEdit_7->toPlainText().toDouble();
     pm.m_iMinReduceArea = ui->plainTextEdit_8->toPlainText().toInt();
-    pm.k_size = ui->plainTextEdit_9->toPlainText().toInt();
-    pm.pixel_threshold = ui->plainTextEdit_10->toPlainText().toInt();
 }
 
 void MainWindow::freshView()
@@ -103,7 +99,7 @@ void MainWindow::freshView()
     }
 }
 
-void MainWindow::on_pushButton_clicked()
+void MainWindow::on_detectAll_clicked()
 {
     cv::String src_path = pm.src_path;
     size_t pos = src_path.find_last_of("/\\");

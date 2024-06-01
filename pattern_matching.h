@@ -251,19 +251,16 @@ public:
     imgprocess imgprocess;
     visualize vis;
 
-    String src_path = "/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-src-1.bmp";
-    String dst_path = "/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-dst-1-3.bmp";
-    String out_path = "/Users/wangjb/Documents/Project/pattern_matching/qfn/qfn-out";
+    String src_path, dst_path, out_path;
     Mat m_matSrc, matSrc_bgr, matSrc_cutcell;
     Mat m_matTpl, matTpl_bgr;
     s_TemplData m_TemplData;
+
     int m_iMaxPos = 3;
     double m_dMaxOverlap = 0.2;
     double m_dScore = 0.5;
     double m_dToleranceAngle = 5;
     int m_iMinReduceArea = 256;
-    int k_size = 5;
-    int pixel_threshold = 30;
     int m_dDstScale = 1;
     int m_dSrcScale = 1;
     int m_dNewScale = 1;
